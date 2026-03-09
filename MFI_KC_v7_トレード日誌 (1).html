@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gotek トレード日誌</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #f59e0b;
+    --accent2: #3b82f6;
+    --bull: #10b981;
+    --bear: #ef4444;
+    --rocket: #f97316;
+    --boom: #8b5cf6;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #475569;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── ヘッダー ── */
+  header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header-stats {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+  .hstat {
+    text-align: center;
+  }
+  .hstat-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .hstat-lbl {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── レイアウト ── */
+  .app { display: flex; height: calc(100vh - 64px); }
+
+  /* ── サイドバー ── */
+  .sidebar {
+    width: 300px;
+    min-width: 300px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .sidebar-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+
+  /* ── 入力フォーム ── */
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  label { font-size: 11px; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; }
+  input, select, textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color .2s;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent2);
+    box-shadow: 0 0 0 3px rgba(59,130,246,.1);
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  select option { background: var(--surface2); }
+
+  .sign-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .sign-btn {
+    padding: 10px 8px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background: var(--surface2);
+    color: var(--text2);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .2s;
+    text-align: center;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .sign-btn:hover { border-color: var(--border); color: var(--text); }
+  .sign-btn.active-rocket    { border-color: var(--rocket); background: rgba(249,115,22,.1);  color: var(--rocket); }
+  .sign-btn.active-boom       { border-color: var(--boom);   background: rgba(139,92,246,.1);  color: var(--boom);   }
+  .sign-btn.active-trend-buy  { border-color: var(--bull);   background: rgba(16,185,129,.1);  color: var(--bull);   }
+  .sign-btn.active-trend-sell { border-color: var(--bear);   background: rgba(239,68,68,.1);   color: var(--bear);   }
+
+  .env-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .env-btn {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .2s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .env-btn:hover { border-color: var(--accent2); color: var(--text); }
+  .env-btn.active { border-color: var(--accent2); background: rgba(59,130,246,.1); color: var(--accent2); }
+
+  .price-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .result-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .result-btn {
+    padding: 10px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background: var(--surface2);
+    color: var(--text2);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all .2s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .result-btn.win  { border-color: var(--bull);  background: rgba(16,185,129,.1); color: var(--bull); }
+  .result-btn.lose { border-color: var(--bear);  background: rgba(239,68,68,.1);  color: var(--bear); }
+
+  .submit-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent), #d97706);
+    color: #000;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all .2s;
+    margin-top: 4px;
+  }
+  .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(245,158,11,.3); }
+  .submit-btn:active { transform: translateY(0); }
+
+  /* ── メインエリア ── */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* ── 統計カード ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .stat-card.gold::before   { background: linear-gradient(90deg, var(--accent), transparent); }
+  .stat-card.blue::before   { background: linear-gradient(90deg, var(--accent2), transparent); }
+  .stat-card.green::before  { background: linear-gradient(90deg, var(--bull), transparent); }
+  .stat-card.red::before    { background: linear-gradient(90deg, var(--bear), transparent); }
+  .stat-card.purple::before { background: linear-gradient(90deg, var(--boom), transparent); }
+  .stat-label { font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* ── 分析セクション ── */
+  .analysis-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .analysis-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .analysis-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--text2);
+    margin-bottom: 16px;
+  }
+
+  .sign-analysis { display: flex; flex-direction: column; gap: 12px; }
+  .sign-row { display: flex; align-items: center; gap: 12px; }
+  .sign-name { font-size: 12px; width: 110px; min-width: 110px; }
+  .sign-bar-bg { flex: 1; background: var(--surface2); border-radius: 4px; height: 8px; overflow: hidden; }
+  .sign-bar { height: 100%; border-radius: 4px; transition: width .6s ease; }
+  .sign-pct { font-family: 'JetBrains Mono', monospace; font-size: 12px; width: 44px; text-align: right; }
+  .sign-count { font-size: 11px; color: var(--text3); width: 36px; text-align: right; }
+
+  .time-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .time-cell {
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: 8px 4px;
+    text-align: center;
+    border: 1px solid var(--border);
+  }
+  .time-hour { font-size: 10px; color: var(--text3); }
+  .time-rate { font-family: 'JetBrains Mono', monospace; font-size: 13px; margin-top: 4px; }
+  .time-cnt { font-size: 9px; color: var(--text3); }
+
+  /* ── 履歴テーブル ── */
+  .history-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .history-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .history-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--text2);
+  }
+  .clear-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--bear);
+    background: transparent;
+    color: var(--bear);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .2s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .clear-btn:hover { background: rgba(239,68,68,.1); }
+
+  .export-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .2s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .export-btn:hover { background: rgba(245,158,11,.1); }
+  .export-btn.json { border-color: var(--accent2); color: var(--accent2); }
+  .export-btn.json:hover { background: rgba(59,130,246,.1); }
+
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+  }
+  td {
+    padding: 12px 14px;
+    font-size: 12px;
+    border-bottom: 1px solid rgba(30,45,69,.5);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+
+  .sign-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .badge-trend-buy  { background: rgba(16,185,129,.15);  color: var(--bull); }
+  .badge-trend-sell { background: rgba(239,68,68,.15);   color: var(--bear); }
+  .badge-rocket { background: rgba(249,115,22,.15);  color: var(--rocket); }
+  .badge-boom   { background: rgba(139,92,246,.15);  color: var(--boom); }
+
+  .pnl-pos { color: var(--bull); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+  .pnl-neg { color: var(--bear); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+  .pnl-zero{ color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+
+  .del-btn {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all .2s;
+  }
+  .del-btn:hover { color: var(--bear); background: rgba(239,68,68,.1); }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px;
+    color: var(--text3);
+  }
+  .empty-state .emoji { font-size: 48px; display: block; margin-bottom: 12px; }
+  .empty-state p { font-size: 13px; }
+
+  /* ── 累計損益グラフ ── */
+  .equity-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .equity-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--text2);
+    margin-bottom: 16px;
+  }
+  canvas { width: 100% !important; }
+
+  /* スクロールバー */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .now-btn {
+    font-size: 10px;
+    padding: 4px 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--accent);
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    white-space: nowrap;
+  }
+  .now-btn:hover { border-color: var(--accent); }
+  .input-row { display: flex; gap: 6px; align-items: center; }
+  .input-row input { flex: 1; }
+
+  /* ── モバイル対応 ── */
+  @media (max-width: 768px) {
+    header {
+      padding: 0 16px;
+      height: auto;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 12px 16px;
+    }
+    .header-stats {
+      gap: 12px;
+      width: 100%;
+      justify-content: space-between;
+    }
+    .hstat-val { font-size: 14px; }
+
+    /* アプリを縦並びに */
+    .app {
+      flex-direction: column;
+      height: auto;
+      min-height: calc(100vh - 100px);
+    }
+
+    /* サイドバーを上部に */
+    .sidebar {
+      width: 100%;
+      min-width: unset;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      padding: 16px;
+      gap: 14px;
+    }
+
+    /* メインエリア */
+    .main {
+      padding: 16px;
+      gap: 16px;
+    }
+
+    /* 統計カードを2列に */
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* 分析グリッドを1列に */
+    .analysis-grid {
+      grid-template-columns: 1fr;
+    }
+
+    /* 時間グリッドを3列に */
+    .time-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    /* テーブルをスクロール可能に */
+    .history-card {
+      overflow-x: auto;
+    }
+    table {
+      min-width: 600px;
+    }
+
+    /* ボタン類を大きく */
+    .sign-btn {
+      padding: 12px 8px;
+      font-size: 13px;
+    }
+    .env-btn {
+      padding: 8px 14px;
+      font-size: 12px;
+    }
+    .submit-btn {
+      padding: 16px;
+      font-size: 20px;
+    }
+    input, select, textarea {
+      font-size: 16px; /* iOSズーム防止 */
+      padding: 12px;
+    }
+    .export-btn, .clear-btn {
+      padding: 8px 16px;
+      font-size: 12px;
+    }
+    .history-header {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">gotek · TRADE LOG</div>
+  <div class="header-stats">
+    <div class="hstat">
+      <div class="hstat-val" id="h-total" style="color:var(--accent2)">0</div>
+      <div class="hstat-lbl">総回数</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-val" id="h-winrate" style="color:var(--bull)">—</div>
+      <div class="hstat-lbl">勝率</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-val" id="h-pnl" style="color:var(--text)">¥0</div>
+      <div class="hstat-lbl">累計損益</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-val" id="h-rr" style="color:var(--accent)">—</div>
+      <div class="hstat-lbl">平均RR</div>
+    </div>
+  </div>
+</header>
+
+<div class="app">
+  <!-- サイドバー（入力フォーム） -->
+  <aside class="sidebar">
+    <div>
+      <div class="sidebar-title">NEW TRADE</div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;">
+
+        <div class="form-group">
+          <label>日付</label>
+          <div class="input-row">
+            <input type="date" id="f-date">
+            <button class="now-btn" onclick="setToday()">今日</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>エントリー時刻</label>
+          <div class="input-row">
+            <input type="time" id="f-time" step="1">
+            <button class="now-btn" onclick="setNow()">今</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>サイン種別</label>
+          <div class="sign-btns">
+            <button class="sign-btn" data-sign="rocket"      onclick="selectSign(this)">🚀 強買い -2σ</button>
+            <button class="sign-btn" data-sign="boom"        onclick="selectSign(this)">💥 強売り +2σ</button>
+            <button class="sign-btn" data-sign="trend-buy"  onclick="selectSign(this)">🟢 買い順張り</button>
+            <button class="sign-btn" data-sign="trend-sell" onclick="selectSign(this)">🔴 売り順張り</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>相場環境</label>
+          <div class="env-btns">
+            <button class="env-btn" onclick="selectEnv(this)">上昇トレンド</button>
+            <button class="env-btn" onclick="selectEnv(this)">下降トレンド</button>
+            <button class="env-btn" onclick="selectEnv(this)">レンジ</button>
+            <button class="env-btn" onclick="selectEnv(this)">高ボラ</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>エントリー価格 / 決済価格</label>
+          <div class="price-row">
+            <input type="number" id="f-entry" placeholder="例: 3285.50" step="0.001">
+            <input type="number" id="f-exit"  placeholder="例: 3291.20" step="0.001">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>損益（円）</label>
+          <input type="number" id="f-pnl" placeholder="例: +800 / -1000">
+        </div>
+
+        <div class="form-group">
+          <label>結果</label>
+          <div class="result-btns">
+            <button class="result-btn" id="rb-win"  onclick="selectResult('win')">✅ 勝ち</button>
+            <button class="result-btn" id="rb-lose" onclick="selectResult('lose')">❌ 負け</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>一言メモ</label>
+          <textarea id="f-memo" placeholder="例：EMA下向き中の反発、TP到達前に反転"></textarea>
+        </div>
+
+        <button class="submit-btn" onclick="addTrade()">RECORD TRADE</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- メインエリア -->
+  <main class="main">
+
+    <!-- 統計カード -->
+    <div class="stats-grid">
+      <div class="stat-card gold">
+        <div class="stat-label">総トレード数</div>
+        <div class="stat-value" id="s-total" style="color:var(--accent)">0</div>
+        <div class="stat-sub">累計</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">勝率</div>
+        <div class="stat-value" id="s-winrate" style="color:var(--bull)">—</div>
+        <div class="stat-sub" id="s-wl">勝0 / 負0</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">累計損益</div>
+        <div class="stat-value" id="s-pnl" style="color:var(--text)">¥0</div>
+        <div class="stat-sub" id="s-avg">平均 —</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-label">平均RR比</div>
+        <div class="stat-value" id="s-rr" style="color:var(--boom)">—</div>
+        <div class="stat-sub">リスクリワード</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">最大連敗</div>
+        <div class="stat-value" id="s-streak" style="color:var(--bear)">0</div>
+        <div class="stat-sub" id="s-streak-sub">連続負け</div>
+      </div>
+    </div>
+
+    <!-- 分析 -->
+    <div class="analysis-grid">
+      <!-- サイン別勝率 -->
+      <div class="analysis-card">
+        <div class="analysis-title">SIGN PERFORMANCE</div>
+        <div class="sign-analysis" id="sign-analysis">
+          <div style="color:var(--text3);font-size:12px;">データなし</div>
+        </div>
+      </div>
+
+      <!-- 時間帯別勝率 -->
+      <div class="analysis-card">
+        <div class="analysis-title">TIME ANALYSIS</div>
+        <div class="time-grid" id="time-analysis">
+          <div style="color:var(--text3);font-size:12px;grid-column:span 6;">データなし</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 損益推移グラフ -->
+    <div class="equity-card">
+      <div class="equity-title">EQUITY CURVE</div>
+      <canvas id="equity-chart" height="120"></canvas>
+    </div>
+
+    <!-- 履歴 -->
+    <div class="history-card">
+      <div class="history-header">
+        <div class="history-title">TRADE HISTORY</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="export-btn" onclick="exportCSV()">📥 CSV出力</button>
+          <button class="export-btn json" onclick="exportJSON()">📦 JSON出力</button>
+          <button class="clear-btn" onclick="clearAll()">全削除</button>
+        </div>
+      </div>
+      <div id="history-container">
+        <div class="empty-state">
+          <span class="emoji">📋</span>
+          <p>まだ記録がありません<br>左のフォームからトレードを記録しましょう</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── データ管理 ──
+let trades = JSON.parse(localStorage.getItem('mfikc_trades') || '[]');
+let selectedSign = null;
+let selectedEnv  = null;
+let selectedResult = null;
+
+function save() { localStorage.setItem('mfikc_trades', JSON.stringify(trades)); }
+
+// ── フォーム ──
+function localDateStr(d = new Date()) {
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+function setToday() {
+  document.getElementById('f-date').value = localDateStr();
+}
+function setNow() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('f-time').value = `${hh}:${mm}:${ss}`;
+}
+
+function selectSign(btn) {
+  document.querySelectorAll('.sign-btn').forEach(b => b.className = 'sign-btn');
+  selectedSign = btn.dataset.sign;
+  btn.classList.add('active-' + selectedSign);
+}
+
+function selectEnv(btn) {
+  document.querySelectorAll('.env-btn').forEach(b => b.classList.remove('active'));
+  selectedEnv = btn.textContent;
+  btn.classList.add('active');
+}
+
+function selectResult(r) {
+  selectedResult = r;
+  document.getElementById('rb-win').className  = 'result-btn' + (r==='win'  ? ' win'  : '');
+  document.getElementById('rb-lose').className = 'result-btn' + (r==='lose' ? ' lose' : '');
+}
+
+function addTrade() {
+  const date   = document.getElementById('f-date').value;
+  const time   = document.getElementById('f-time').value;
+  const entry  = parseFloat(document.getElementById('f-entry').value) || null;
+  const exit   = parseFloat(document.getElementById('f-exit').value)  || null;
+  const pnl    = parseFloat(document.getElementById('f-pnl').value);
+  const memo   = document.getElementById('f-memo').value.trim();
+
+  if (!date)          { alert('日付を入力してください'); return; }
+  if (!selectedSign)  { alert('サイン種別を選択してください'); return; }
+  if (!selectedResult){ alert('結果（勝ち/負け）を選択してください'); return; }
+  if (isNaN(pnl))     { alert('損益を入力してください'); return; }
+
+  // RR計算
+  let rr = null;
+  if (entry && exit) {
+    const sl = 1000; // 固定SL想定（後で拡張可能）
+    rr = Math.abs(exit - entry) / (sl / 100);
+  }
+
+  const trade = {
+    id: Date.now(),
+    date, time,
+    sign: selectedSign,
+    env: selectedEnv || '—',
+    entry, exit, pnl,
+    result: selectedResult,
+    memo,
+    rr
+  };
+
+  trades.unshift(trade);
+  save();
+  render();
+  resetForm();
+}
+
+function resetForm() {
+  document.getElementById('f-date').value  = '';
+  document.getElementById('f-time').value  = '';
+  document.getElementById('f-entry').value = '';
+  document.getElementById('f-exit').value  = '';
+  document.getElementById('f-pnl').value   = '';
+  document.getElementById('f-memo').value  = '';
+  document.querySelectorAll('.sign-btn').forEach(b => b.className = 'sign-btn');
+  document.querySelectorAll('.env-btn').forEach(b => b.classList.remove('active'));
+  selectedSign = null; selectedEnv = null; selectedResult = null;
+  document.getElementById('rb-win').className  = 'result-btn';
+  document.getElementById('rb-lose').className = 'result-btn';
+}
+
+function deleteTrade(id) {
+  if (!confirm('このトレードを削除しますか？')) return;
+  trades = trades.filter(t => t.id !== id);
+  save(); render();
+}
+
+function clearAll() {
+  if (!confirm('全トレード記録を削除しますか？')) return;
+  trades = []; save(); render();
+}
+
+// ── レンダリング ──
+const SIGN_INFO = {
+  
+  rocket:     { label:'🚀 強買い -2σ', cls:'badge-rocket',     bar:'#f97316', color:'var(--rocket)' },
+  boom:       { label:'💥 強売り +2σ', cls:'badge-boom',       bar:'#8b5cf6', color:'var(--boom)'   },
+  'trend-buy':  { label:'🟢 買い順張り',   cls:'badge-trend-buy',  bar:'#10b981', color:'var(--bull)'   },
+  'trend-sell': { label:'🔴 売り順張り',   cls:'badge-trend-sell', bar:'#ef4444', color:'var(--bear)'   },
+};
+
+function render() {
+  renderStats();
+  renderSignAnalysis();
+  renderTimeAnalysis();
+  renderHistory();
+  renderChart();
+}
+
+function renderStats() {
+  const total = trades.length;
+  const wins  = trades.filter(t => t.result === 'win').length;
+  const loses = trades.filter(t => t.result === 'lose').length;
+  const totalPnl = trades.reduce((s, t) => s + (t.pnl||0), 0);
+  const winrate  = total > 0 ? (wins/total*100).toFixed(1)+'%' : '—';
+  const avgPnl   = total > 0 ? Math.round(totalPnl/total) : null;
+
+  // 最大連敗
+  let maxStreak = 0, cur = 0;
+  [...trades].reverse().forEach(t => {
+    if (t.result === 'lose') { cur++; maxStreak = Math.max(maxStreak, cur); }
+    else cur = 0;
+  });
+
+  // 平均RR
+  const rrTrades = trades.filter(t => t.rr !== null && t.rr !== undefined);
+  const avgRR = rrTrades.length > 0 ? (rrTrades.reduce((s,t)=>s+t.rr,0)/rrTrades.length).toFixed(2) : null;
+
+  document.getElementById('s-total').textContent   = total;
+  document.getElementById('s-winrate').textContent = winrate;
+  document.getElementById('s-wl').textContent      = `勝${wins} / 負${loses}`;
+  document.getElementById('s-pnl').textContent     = (totalPnl >= 0 ? '+' : '') + '¥' + totalPnl.toLocaleString();
+  document.getElementById('s-pnl').style.color     = totalPnl > 0 ? 'var(--bull)' : totalPnl < 0 ? 'var(--bear)' : 'var(--text)';
+  document.getElementById('s-avg').textContent     = avgPnl !== null ? `平均 ${avgPnl>=0?'+':''}¥${avgPnl.toLocaleString()}` : '平均 —';
+  document.getElementById('s-rr').textContent      = avgRR ? avgRR : '—';
+  document.getElementById('s-streak').textContent  = maxStreak;
+
+  // ヘッダー
+  document.getElementById('h-total').textContent   = total;
+  document.getElementById('h-winrate').textContent = winrate;
+  document.getElementById('h-pnl').textContent     = (totalPnl >= 0 ? '+' : '') + '¥' + totalPnl.toLocaleString();
+  document.getElementById('h-pnl').style.color     = totalPnl > 0 ? 'var(--bull)' : totalPnl < 0 ? 'var(--bear)' : 'var(--text)';
+  document.getElementById('h-rr').textContent      = avgRR ? avgRR : '—';
+}
+
+function renderSignAnalysis() {
+  const el = document.getElementById('sign-analysis');
+  const signs = ['rocket','boom','trend-buy','trend-sell'];
+  const rows = signs.map(s => {
+    const st = trades.filter(t => t.sign === s);
+    const wins = st.filter(t => t.result === 'win').length;
+    const pct  = st.length > 0 ? (wins/st.length*100) : 0;
+    return { sign:s, total:st.length, wins, pct };
+  }).filter(r => r.total > 0);
+
+  if (rows.length === 0) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:12px;">データなし</div>';
+    return;
+  }
+
+  el.innerHTML = rows.map(r => {
+    const info = SIGN_INFO[r.sign];
+    const pctStr = r.total > 0 ? r.pct.toFixed(0)+'%' : '—';
+    const barColor = r.pct >= 60 ? 'var(--bull)' : r.pct >= 50 ? 'var(--accent)' : 'var(--bear)';
+    return `<div class="sign-row">
+      <div class="sign-name" style="color:${info.color}">${info.label}</div>
+      <div class="sign-bar-bg"><div class="sign-bar" style="width:${r.pct}%;background:${barColor}"></div></div>
+      <div class="sign-pct" style="color:${barColor}">${pctStr}</div>
+      <div class="sign-count">${r.total}回</div>
+    </div>`;
+  }).join('');
+}
+
+function renderTimeAnalysis() {
+  const el = document.getElementById('time-analysis');
+  // 時間帯別集計（3時間ブロック）
+  const blocks = [
+    {label:'0-3時',  h:[0,1,2]},
+    {label:'3-6時',  h:[3,4,5]},
+    {label:'6-9時',  h:[6,7,8]},
+    {label:'9-12時', h:[9,10,11]},
+    {label:'12-15時',h:[12,13,14]},
+    {label:'15-18時',h:[15,16,17]},
+    {label:'18-21時',h:[18,19,20]},
+    {label:'21-24時',h:[21,22,23]},
+  ];
+
+  const hasTimes = trades.some(t => t.time);
+  if (!hasTimes) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:12px;grid-column:span 6;">時刻データなし</div>';
+    return;
+  }
+
+  el.style.gridTemplateColumns = 'repeat(4, 1fr)';
+  el.innerHTML = blocks.map(b => {
+    const bt = trades.filter(t => {
+      if (!t.time) return false;
+      const h = parseInt(t.time.split(':')[0]);
+      return b.h.includes(h);
+    });
+    const wins = bt.filter(t => t.result === 'win').length;
+    const pct  = bt.length > 0 ? (wins/bt.length*100).toFixed(0) : null;
+    const color = pct === null ? 'var(--text3)' : pct >= 60 ? 'var(--bull)' : pct >= 50 ? 'var(--accent)' : 'var(--bear)';
+    return `<div class="time-cell" style="border-color:${pct !== null ? color : 'var(--border)'}22">
+      <div class="time-hour">${b.label}</div>
+      <div class="time-rate" style="color:${color}">${pct !== null ? pct+'%' : '—'}</div>
+      <div class="time-cnt">${bt.length}回</div>
+    </div>`;
+  }).join('');
+}
+
+function renderHistory() {
+  const el = document.getElementById('history-container');
+  if (trades.length === 0) {
+    el.innerHTML = `<div class="empty-state"><span class="emoji">📋</span><p>まだ記録がありません<br>左のフォームからトレードを記録しましょう</p></div>`;
+    return;
+  }
+
+  let cumPnl = 0;
+  // 古い順に累計計算
+  const withCum = [...trades].reverse().map(t => {
+    cumPnl += (t.pnl||0);
+    return {...t, cumPnl};
+  }).reverse();
+
+  el.innerHTML = `<table>
+    <thead><tr>
+      <th>日付</th><th>時刻</th><th>サイン</th><th>相場環境</th>
+      <th>エントリー</th><th>決済</th><th>損益</th><th>累計損益</th><th>メモ</th><th></th>
+    </tr></thead>
+    <tbody>
+    ${withCum.map(t => {
+      const info = SIGN_INFO[t.sign] || {label:t.sign, cls:'badge-trend-buy'};
+      const pnlCls = t.pnl > 0 ? 'pnl-pos' : t.pnl < 0 ? 'pnl-neg' : 'pnl-zero';
+      const cumCls = t.cumPnl > 0 ? 'pnl-pos' : t.cumPnl < 0 ? 'pnl-neg' : 'pnl-zero';
+      return `<tr>
+        <td>${t.date||'—'}</td>
+        <td style="color:var(--text3)">${t.time||'—'}</td>
+        <td><span class="sign-badge ${info.cls}">${info.label}</span></td>
+        <td style="color:var(--text2);font-size:11px">${t.env||'—'}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${t.entry||'—'}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${t.exit||'—'}</td>
+        <td><span class="${pnlCls}">${t.pnl>=0?'+':''}¥${(t.pnl||0).toLocaleString()}</span></td>
+        <td><span class="${cumCls}">${t.cumPnl>=0?'+':''}¥${t.cumPnl.toLocaleString()}</span></td>
+        <td style="color:var(--text2);font-size:11px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.memo||''}</td>
+        <td><button class="del-btn" onclick="deleteTrade(${t.id})">✕</button></td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table>`;
+}
+
+function renderChart() {
+  const canvas = document.getElementById('equity-chart');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = 120 * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  const W = canvas.offsetWidth;
+  const H = 120;
+  ctx.clearRect(0, 0, W, H);
+
+  if (trades.length < 2) {
+    ctx.fillStyle = '#475569';
+    ctx.font = '13px Noto Sans JP';
+    ctx.textAlign = 'center';
+    ctx.fillText('2件以上記録するとグラフが表示されます', W/2, H/2);
+    return;
+  }
+
+  // 累計損益データ（古い順）
+  const points = [];
+  let cum = 0;
+  [...trades].reverse().forEach(t => { cum += (t.pnl||0); points.push(cum); });
+
+  const min = Math.min(0, ...points);
+  const max = Math.max(0, ...points);
+  const range = max - min || 1;
+  const pad = { t:16, b:16, l:48, r:16 };
+  const cw = W - pad.l - pad.r;
+  const ch = H - pad.t - pad.b;
+
+  const toX = i => pad.l + (i / (points.length-1)) * cw;
+  const toY = v => pad.t + (1 - (v - min) / range) * ch;
+
+  // ゼロライン
+  const zy = toY(0);
+  ctx.strokeStyle = '#1e2d45';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(pad.l, zy); ctx.lineTo(W-pad.r, zy); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // グラデーション塗りつぶし
+  const lastVal = points[points.length-1];
+  const grad = ctx.createLinearGradient(0, pad.t, 0, H-pad.b);
+  if (lastVal >= 0) {
+    grad.addColorStop(0, 'rgba(16,185,129,.3)');
+    grad.addColorStop(1, 'rgba(16,185,129,.0)');
+  } else {
+    grad.addColorStop(0, 'rgba(239,68,68,.0)');
+    grad.addColorStop(1, 'rgba(239,68,68,.3)');
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(toX(0), toY(points[0]));
+  points.forEach((v,i) => { if(i>0) ctx.lineTo(toX(i), toY(v)); });
+  ctx.lineTo(toX(points.length-1), H-pad.b);
+  ctx.lineTo(toX(0), H-pad.b);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // ライン
+  ctx.beginPath();
+  ctx.moveTo(toX(0), toY(points[0]));
+  points.forEach((v,i) => { if(i>0) ctx.lineTo(toX(i), toY(v)); });
+  ctx.strokeStyle = lastVal >= 0 ? '#10b981' : '#ef4444';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 最終値ラベル
+  ctx.fillStyle = lastVal >= 0 ? '#10b981' : '#ef4444';
+  ctx.font = 'bold 11px JetBrains Mono';
+  ctx.textAlign = 'right';
+  ctx.fillText((lastVal>=0?'+':'')+'¥'+lastVal.toLocaleString(), W-pad.r, toY(lastVal)-4);
+}
+
+// 初期化
+setToday();
+render();
+window.addEventListener('resize', renderChart);
+
+// ── エクスポート ──
+function exportCSV() {
+  if (trades.length === 0) { alert('データがありません'); return; }
+
+  const SIGN_LABELS = { rocket:'🚀 強買い -2σ', boom:'💥 強売り +2σ', 'trend-buy':'🟢 買い順張り', 'trend-sell':'🔴 売り順張り' };
+
+  // 累計損益を計算
+  let cum = 0;
+  const rows = [...trades].reverse().map(t => {
+    cum += (t.pnl || 0);
+    return {
+      日付: t.date || '',
+      時刻: t.time || '',
+      サイン種別: SIGN_LABELS[t.sign] || t.sign,
+      相場環境: t.env || '',
+      エントリー価格: t.entry || '',
+      決済価格: t.exit || '',
+      損益_円: t.pnl || 0,
+      累計損益_円: cum,
+      結果: t.result === 'win' ? '勝ち' : '負け',
+      メモ: (t.memo || '').replace(/,/g, '、').replace(/\n/g, ' ')
+    };
+  }).reverse();
+
+  const headers = Object.keys(rows[0]);
+  const csv = [
+    '\uFEFF' + headers.join(','), // BOMつきUTF-8でExcelが文字化けしない
+    ...rows.map(r => headers.map(h => `"${r[h]}"`).join(','))
+  ].join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const date = localDateStr();
+  a.href     = url;
+  a.download = `MFIKC_trades_${date}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportJSON() {
+  if (trades.length === 0) { alert('データがありません'); return; }
+
+  const SIGN_LABELS = { rocket:'🚀 強買い -2σ', boom:'💥 強売り +2σ', 'trend-buy':'🟢 買い順張り', 'trend-sell':'🔴 売り順張り' };
+
+  // 統計サマリーも含めて出力
+  const wins    = trades.filter(t => t.result === 'win').length;
+  const total   = trades.length;
+  const totalPnl= trades.reduce((s,t) => s+(t.pnl||0), 0);
+
+  const payload = {
+    export_date: new Date().toISOString(),
+    indicator: 'gotek',
+    summary: {
+      total_trades: total,
+      wins,
+      loses: total - wins,
+      winrate: total > 0 ? (wins/total*100).toFixed(1)+'%' : '—',
+      total_pnl: totalPnl,
+      avg_pnl: total > 0 ? Math.round(totalPnl/total) : 0,
+    },
+    sign_breakdown: ['rocket','boom','trend-buy','trend-sell'].map(s => {
+      const st   = trades.filter(t => t.sign === s);
+      const sw   = st.filter(t => t.result === 'win').length;
+      const spnl = st.reduce((a,t) => a+(t.pnl||0), 0);
+      return {
+        sign: SIGN_LABELS[s],
+        count: st.length,
+        wins: sw,
+        winrate: st.length > 0 ? (sw/st.length*100).toFixed(1)+'%' : '—',
+        total_pnl: spnl
+      };
+    }).filter(r => r.count > 0),
+    trades: [...trades].reverse().map(t => ({
+      date: t.date,
+      time: t.time,
+      sign: SIGN_LABELS[t.sign] || t.sign,
+      env:  t.env,
+      entry_price: t.entry,
+      exit_price:  t.exit,
+      pnl: t.pnl,
+      result: t.result === 'win' ? '勝ち' : '負け',
+      memo: t.memo
+    }))
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const date = localDateStr();
+  a.href     = url;
+  a.download = `MFIKC_trades_${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
